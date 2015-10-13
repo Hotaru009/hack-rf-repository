@@ -24,8 +24,8 @@
 #define __W25Q80BV_H__
 
 #define W25Q80BV_PAGE_LEN     256U
-#define W25Q80BV_NUM_PAGES    4096U
-#define W25Q80BV_NUM_BYTES    1048576U
+#define W25Q80BV_NUM_PAGES    8192U
+#define W25Q80BV_NUM_BYTES    2097152U
 
 #define W25Q80BV_WRITE_ENABLE 0x06
 #define W25Q80BV_CHIP_ERASE   0xC7
@@ -37,7 +37,7 @@
 #define W25Q80BV_STATUS_BUSY  0x01
 
 
-#define W25Q80BV_DEVICE_ID_RES  0x13 /* Expected device_id for W25Q80BV */
+#define W25Q80BV_DEVICE_ID_RES  0x14 /* Expected device_id for W25Q16DV */
 
 typedef union
 {

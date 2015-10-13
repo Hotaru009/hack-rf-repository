@@ -24,12 +24,35 @@
 
 #include "hackrf_core.h"
 
+#define SCU_PINMUX_AZALEA_LED1     (P7_6)  /* GPIO3[14] on P7_6 */
+#define SCU_PINMUX_AZALEA_LED2     (P4_1)  /* GPIO2[1] on P4_1 */
+#define SCU_PINMUX_AZALEA_LED3     (P7_5)  /* GPIO3[13] on P7_5 */
+#define SCU_PINMUX_AZALEA_LED4     (P7_4)  /* GPIO3[12] on P7_4 */
+
+#define PIN_AZALEA_LED1            (BIT14) /* GPIO3[14] on P7_6 */
+#define PIN_AZALEA_LED2            (BIT1)  /* GPIO2[1] on P4_1 */
+#define PIN_AZALEA_LED3            (BIT13) /* GPIO3[13] on P7_5 */
+#define PIN_AZALEA_LED4            (BIT12) /* GPIO3[12] on P7_4 */
+
+#define PORT_AZALEA_LED1_3_4       (GPIO3) /* PORT for LED1, 3, 4 */
+#define PORT_AZALEA_LED2           (GPIO2) /* PORT for LED1, 3, 4 */
+
 uint32_t boot0, boot1, boot2, boot3;
 
 int main(void)
 {
 	int i;
 	pin_setup();
+
+	/* Configure SCU Pin Mux as GPIO */
+	scu_pinmux(SCU_PINMUX_AZALEA_LED1, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_AZALEA_LED2, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_AZALEA_LED3, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_AZALEA_LED4, SCU_GPIO_NOPULL);
+
+	/* Configure GPIO2[1/2/8] (P4_1/2 P6_12) as output. */
+	GPIO2_DIR |= PIN_AZALEA_LED2;
+	GPIO3_DIR |= (PIN_AZALEA_LED1 | PIN_AZALEA_LED3 | PIN_AZALEA_LED4);
 
 	/* enable all power supplies */
 	enable_1v8_power();
@@ -42,10 +65,23 @@ int main(void)
 		boot2 = BOOT2_STATE;
 		boot3 = BOOT3_STATE;
 
-		gpio_set(PORT_LED1_3, (PIN_LED1|PIN_LED2|PIN_LED3)); /* LEDs on */
+		gpio_set(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED4); /* LED4 off */
+		gpio_clear(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED1); /* LED1 on */
 		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
 			__asm__("nop");
-		gpio_clear(PORT_LED1_3, (PIN_LED1|PIN_LED2|PIN_LED3)); /* LED off */
+
+		gpio_set(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED1); /* LED1 off */
+		gpio_clear(PORT_AZALEA_LED2, (PIN_AZALEA_LED2)); /* LED2 on */
+		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
+			__asm__("nop");
+
+		gpio_set(PORT_AZALEA_LED2, (PIN_AZALEA_LED2)); /* LED2 off */
+		gpio_clear(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED3); /* LED3 on */
+		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
+			__asm__("nop");
+
+		gpio_set(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED3); /* LED3 off */
+		gpio_clear(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED4); /* LED4 on */
 		for (i = 0; i < 2000000; i++)	/* Wait a bit. */
 			__asm__("nop");
 	}

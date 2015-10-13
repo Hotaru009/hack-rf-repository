@@ -26,6 +26,7 @@
 
 #include <libopencm3/lpc43xx/gpio.h>
 #include <libopencm3/lpc43xx/m4/nvic.h>
+#include <libopencm3/lpc43xx/scu.h>
 
 #include <streaming.h>
 
@@ -47,6 +48,19 @@
 #include "sgpio_isr.h"
 #include "usb_bulk_buffer.h"
 #include "si5351c.h"
+
+#define SCU_PINMUX_AZALEA_LED1     (P7_6)  /* GPIO3[14] on P7_6 */
+#define SCU_PINMUX_AZALEA_LED2     (P4_1)  /* GPIO2[1] on P4_1 */
+#define SCU_PINMUX_AZALEA_LED3     (P7_5)  /* GPIO3[13] on P7_5 */
+#define SCU_PINMUX_AZALEA_LED4     (P7_4)  /* GPIO3[12] on P7_4 */
+
+#define PIN_AZALEA_LED1            (BIT14) /* GPIO3[14] on P7_6 */
+#define PIN_AZALEA_LED2            (BIT1)  /* GPIO2[1] on P4_1 */
+#define PIN_AZALEA_LED3            (BIT13) /* GPIO3[13] on P7_5 */
+#define PIN_AZALEA_LED4            (BIT12) /* GPIO3[12] on P7_4 */
+
+#define PORT_AZALEA_LED1_3_4       (GPIO3) /* PORT for LED1, 3, 4 */
+#define PORT_AZALEA_LED2           (GPIO2) /* PORT for LED1, 3, 4 */
  
 static volatile transceiver_mode_t _transceiver_mode = TRANSCEIVER_MODE_OFF;
 
@@ -218,13 +232,27 @@ void usb_set_descriptor_by_serial_number(void)
 
 int main(void) {
 	pin_setup();
-	enable_1v8_power();
+	//enable_1v8_power();
 #ifdef HACKRF_ONE
-	enable_rf_power();
+	//enable_rf_power();
 #endif
+
+	/* Configure SCU Pin Mux as GPIO */
+	scu_pinmux(SCU_PINMUX_AZALEA_LED1, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_AZALEA_LED2, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_AZALEA_LED3, SCU_GPIO_NOPULL);
+	scu_pinmux(SCU_PINMUX_AZALEA_LED4, SCU_GPIO_NOPULL);
+
+	/* Configure GPIO2[1/2/8] (P4_1/2 P6_12) as output. */
+	GPIO2_DIR |= PIN_AZALEA_LED2;
+	GPIO3_DIR |= (PIN_AZALEA_LED1 | PIN_AZALEA_LED3 | PIN_AZALEA_LED4);
+
+	gpio_clear(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED4); /* LED4 on */
+
 	cpu_clock_init();
 
 	usb_set_descriptor_by_serial_number();
+	gpio_set(PORT_AZALEA_LED1_3_4, PIN_AZALEA_LED4); /* LED4 off */
 
 	usb_set_configuration_changed_cb(usb_configuration_changed);
 	usb_peripheral_reset();
@@ -243,9 +271,9 @@ int main(void) {
 
 	usb_run(&usb_device);
 	
-	ssp1_init();
+	//ssp1_init();
 
-	rf_path_init();
+	//rf_path_init();
 
 	unsigned int phase = 0;
 	while(true) {
